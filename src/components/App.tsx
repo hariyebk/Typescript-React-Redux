@@ -1,18 +1,59 @@
 import React from "react"
-import { Todos } from "../actions"
+import { DeleteTodos, FetchDispatch, Todos } from "../actions"
 import { StoreState } from "../reducers"
 import { connect } from "react-redux"
-import { fetchTodos } from "../actions"
+import { fetchTodos, deleteTodos } from "../actions"
 
 
 interface Appprops{
-    todo: Todos[]
+    todo: Todos[],
+    fetchTodos: Function,
+    deleteTodos: typeof deleteTodos
 }
-class _App extends React.Component<Appprops>{
+
+interface AppState{
+    isFetching: boolean
+}
+class _App extends React.Component<Appprops, AppState>{
+    
+    // Initializing our state
+    constructor(props: Appprops){
+        super(props)
+        this.state = {isFetching: false}
+    }
+
+    componentDidUpdate(prevProps: Appprops): void{
+        if(!prevProps.todo.length && this.props.todo.length){
+            this.setState({isFetching: false})
+        }
+    }
+    // Event handlers
+    handleClick = (): void => {
+        this.props.fetchTodos()
+        this.setState({isFetching: true})
+    }
+    handleDelete = (id: number): void => {
+        this.props.deleteTodos(id)
+    }
+
+    // Renders a list of todos
+    renderList(): JSX.Element[]{
+        return this.props.todo.map((todo: Todos) => {
+            return (
+                <div onClick={() => this.handleDelete(todo.id)} key={todo.id} style={{cursor: "pointer"}}>
+                    {todo.title}
+                </div>
+            )
+        })
+    }
+    
+    // Main app component
     render(): React.ReactNode {
         return (
             <div>
-                Hi there
+                <button onClick={this.handleClick}> Fetch </button>
+                {this.state.isFetching ? "Loading" : null}
+                { this.renderList()}
             </div>
         )
     }
@@ -29,7 +70,7 @@ export const mapStateToProps = (state: StoreState): {todo: Todos[]} => {
 export const App = connect(
     mapStateToProps,
     // mapDispatchToProps - action creator
-    {fetchTodos}
+    {fetchTodos, deleteTodos}
 )(_App)
 
 export default App
